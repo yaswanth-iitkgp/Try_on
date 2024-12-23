@@ -535,10 +535,9 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
     if is_checked_crop:
         out_img = images[0].resize(crop_size)        
         human_img_orig.paste(out_img, (int(left), int(top)))    
-        return human_img_orig, mask_gray
+        return human_img_orig
     else:
-        return images[0], mask_gray
-    # return images[0], mask_gray
+        return images[0]
 
 def main():
     with gr.Blocks() as demo:
@@ -594,7 +593,7 @@ def main():
                             with gr.Row():
                                 prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
                     with gr.Column():
-                        image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
+                        image_out = gr.Image(label="Output", elem_id="output-img", show_share_button=False)
 
                 with gr.Column():
                     try_button = gr.Button(value="Try-on")
@@ -606,7 +605,7 @@ def main():
                 try_button.click(
                     fn=start_tryon, 
                     inputs=[imgs, garm_img, prompt, is_checked, is_checked_crop, denoise_steps, seed], 
-                    outputs=[image_out]
+                    outputs=image_out
                 )
 
     demo.launch(share=True)
