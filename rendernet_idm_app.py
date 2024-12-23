@@ -25,6 +25,7 @@ from preprocess.humanparsing.run_parsing import Parsing
 from preprocess.openpose.run_openpose import OpenPose
 from detectron2.data.detection_utils import convert_PIL_to_numpy,_apply_exif_orientation
 from torchvision.transforms.functional import to_pil_image
+from rembg import remove
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
@@ -539,6 +540,27 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
     else:
         return images[0]
 
+def replace_background(image, background):
+    """Remove background from image and place it on new background"""
+    try:
+        if image is None or background is None:
+            return None
+            
+        # Remove background from the main image
+        output = remove(image)
+        
+        # Resize background to match main image size if needed
+        background = background.resize(image.size)
+        
+        # Composite the foreground onto the background
+        background.paste(output, (0, 0), output)
+        
+        return background
+        
+    except Exception as e:
+        log_error(f"Error in background replacement: {str(e)}")
+        return None
+
 def main():
     with gr.Blocks() as demo:
         gr.Markdown("# AI Fashion Assistant")
@@ -606,6 +628,24 @@ def main():
                     fn=start_tryon, 
                     inputs=[imgs, garm_img, prompt, is_checked, is_checked_crop, denoise_steps, seed], 
                     outputs=image_out
+                )
+
+            # Fourth Tab - Background Replacement
+            with gr.Tab("Background Replacement"):
+                gr.Markdown("## Replace Image Background")
+                with gr.Row():
+                    with gr.Column():
+                        input_img = gr.Image(label="Upload Main Image", type="pil")
+                        background_img = gr.Image(label="Upload New Background", type="pil")
+                    with gr.Column():
+                        output_img = gr.Image(label="Result")
+                
+                replace_btn = gr.Button("Replace Background")
+                
+                replace_btn.click(
+                    fn=replace_background,
+                    inputs=[input_img, background_img],
+                    outputs=output_img
                 )
 
     demo.launch(share=True)
